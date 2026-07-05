@@ -1,0 +1,20 @@
+{
+  "streams": [
+    {
+      "codec_type": "video",
+      "codec_name": "hevc",
+      "width": 3840,
+      "height": 2160,
+      "pix_fmt": "yuv420p10le",
+      "color_range": "tv",
+      "color_space": "bt2020nc",
+      "color_transfer": "smpte2084",
+      "color_primaries": "bt2020",
+      "side_data_list": [
+        {"side_data_type": "Mastering display metadata"},
+        {"side_data_type": "Content light level metadata", "max_content": 1000, "max_average": 400}
+      ]
+    }
+  ]
+}
+

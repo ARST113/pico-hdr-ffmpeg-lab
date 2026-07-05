@@ -1,0 +1,16 @@
+.gradle/
+.idea/
+.cxx/
+build/
+out/
+*.apk
+*.aab
+*.so
+*.o
+*.obj
+*.dll
+*.exe
+*.log
+__pycache__/
+.DS_Store
+
