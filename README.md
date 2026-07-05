@@ -34,7 +34,7 @@ The local player build uses these recognizable mechanics:
 - `tools/probe_hdr.py` - a runnable ffprobe JSON HDR classifier.
 - `samples/` - small ffprobe JSON examples.
 - `android/` - Kotlin snippets for Android `MediaFormat` HDR setup.
-- `cpp/` - FFmpeg/OpenXR reference snippets.
+- `cpp/` - FFmpeg/OpenXR reference snippets and Dolby mapping formulas.
 - `shaders/` - GLSL HDR mapping code.
 
 ## Quick Check

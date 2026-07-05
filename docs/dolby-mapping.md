@@ -49,6 +49,128 @@ That means the Dolby "table" is not just one static lookup table. The player
 builds mapping textures from the current Dolby RPU mapping metadata, then binds
 them as shader samplers.
 
+## Exact Formula
+
+The extracted `BuildMMR` function has this signature shape:
+
+```cpp
+double BuildMMR(
+    double x,
+    double y,
+    double z,
+    int order,
+    double constant,
+    double coeff[3][7]
+);
+```
+
+It builds these seven basis values:
+
+```text
+basis = [x, y, z, x*y, x*z, y*z, x*y*z]
+```
+
+Then it sums the same basis in powers 1, 2, and 3:
+
+```text
+result = constant
+
+for row in 0..order-1:
+    power = row + 1
+    for i in 0..6:
+        result += coeff[row][i] * pow(basis[i], power)
+```
+
+Expanded:
+
+```text
+constant
++ c00*x      + c01*y      + c02*z      + c03*xy      + c04*xz      + c05*yz      + c06*xyz
++ c10*x^2    + c11*y^2    + c12*z^2    + c13*(xy)^2  + c14*(xz)^2  + c15*(yz)^2  + c16*(xyz)^2
++ c20*x^3    + c21*y^3    + c22*z^3    + c23*(xy)^3  + c24*(xz)^3  + c25*(yz)^3  + c26*(xyz)^3
+```
+
+The local `GetImageDataMMR` path emits a `16 x 16 x 16` float texture. The
+coordinates are normalized as:
+
+```text
+x = xi / 15
+y = yi / 15
+z = zi / 15
+```
+
+The output order is `z -> y -> x`, so index calculation is:
+
+```text
+index = (z * 16 + y) * 16 + x
+```
+
+The coefficients are normalized by:
+
+```text
+coef = raw_coef / (1 << coef_log2_denom)
+constant = raw_constant / (1 << coef_log2_denom)
+```
+
+The local generator reads `mmr_constant[0]` and `mmr_coef[0][0..2][0..6]`.
+Unused coefficient rows are expected to be zeroed upstream.
+
+## Polynomial Formula
+
+The polynomial path emits a `1024 x 1` float texture.
+
+The identity baseline is:
+
+```text
+out[i] = i / 1023
+```
+
+For each piece:
+
+```text
+lower_pivot = pivots[piece] / ((1 << bit_depth) - 1)
+c0 = poly_coef[piece][0] / (1 << coef_log2_denom)
+c1 = poly_coef[piece][1] / (1 << coef_log2_denom)
+c2 = poly_order[piece] == 2
+   ? poly_coef[piece][2] / (1 << coef_log2_denom)
+   : 0
+```
+
+For sample `x = i / 1023`, the selected piece is the last piece whose
+`lower_pivot <= x`. If no piece matches, the identity value is kept.
+
+The value written to the LUT is:
+
+```text
+out[i] = c0 + x*c1 + x*x*c2
+```
+
+Important: the polynomial is evaluated in global normalized `x`, not in local
+piece coordinates.
+
+## Texture Selection
+
+For each Dolby component (`I`, `Ct`, `Cp`) the local `UpdateTexFromMapping`
+counts curve pieces:
+
+```text
+if num_pivots <= 1:
+    use identity 2D ramp
+else if exactly one piece has mapping_idc == MMR:
+    use 16x16x16 MMR 3D texture
+else if at least one piece has mapping_idc == POLYNOMIAL:
+    use 1024x1 polynomial 2D texture
+else:
+    use identity 2D ramp
+```
+
+Texture upload details:
+
+```text
+2D: target GL_TEXTURE_2D, width 1024, height 1, format GL_RED, type GL_FLOAT
+3D: target GL_TEXTURE_3D, size 16x16x16, format GL_RED, type GL_FLOAT
+```
+
 ## Shader Side
 
 The shader has two mapping forms:
