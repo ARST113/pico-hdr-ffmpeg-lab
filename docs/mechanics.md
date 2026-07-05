@@ -60,6 +60,16 @@ The rendering path has three layers:
 - YUV/P010 output for HDR where 10-bit precision matters.
 - FFmpeg-decoded 10/12-bit YUV planes uploaded to textures for fallback and Dolby paths.
 
+Before color conversion, the renderer also decides how the video is physically
+presented:
+
+- stereo packing: mono, half/full SBS, half/full OU, MVC, MV-HEVC;
+- map/projection: flat, curved, 180, 360, YouTube360, fisheye, cube;
+- eye controls: reverse eye and force 3D video to 2D;
+- layer placement: OpenXR video layer, subtitles, UI panels, and theater models.
+
+See `docs/video-layouts-and-geometry.md` for the full geometry and UV pipeline.
+
 When the runtime cannot present HDR natively, shader tone mapping is used:
 
 - Decode ST2084/PQ to linear light.

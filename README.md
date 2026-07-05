@@ -24,14 +24,19 @@ The local player build uses these recognizable mechanics:
 - FFmpeg symbols for mastering display metadata, content light metadata, dynamic HDR10+, DOVI config and Dolby profile.
 - OpenXR symbols `xrEnumerateColorSpacesFB` / `xrSetColorSpaceFB`.
 - Shader strings with ST2084 constants, `vColorMatHDR`, `vColorMatDolby`, Dolby LUT samplers and tone mapping.
+- 2D/3D video type detection for SBS, OU, MVC, MV-HEVC, 180/360, YouTube360, fisheye, cube, and theater paths.
+- OpenXR video layer placement, per-eye UV mapping, reverse-eye, force-2D, curved screen, and passthrough/alpha hooks.
 
 ## Layout
 
 - `docs/mechanics.md` - architecture notes and decision rules.
+- `docs/player-mechanics-index.md` - full playback stack map.
+- `docs/video-layouts-and-geometry.md` - 2D/3D packing, projection, UV, mesh, and layer mechanics.
 - `docs/color-pipeline.md` - how the color look is selected and built.
 - `docs/dolby-mapping.md` - Dolby RPU to mapping-texture notes.
 - `docs/ffmpeg-to-android.md` - FFmpeg enum to Android HDR key mapping.
 - `tools/probe_hdr.py` - a runnable ffprobe JSON HDR classifier.
+- `tools/probe_layout.py` - a runnable 2D/3D layout classifier.
 - `samples/` - small ffprobe JSON examples.
 - `android/` - Kotlin snippets for Android `MediaFormat` HDR setup.
 - `cpp/` - FFmpeg/OpenXR reference snippets and Dolby mapping formulas.
@@ -43,6 +48,7 @@ The local player build uses these recognizable mechanics:
 python tools/probe_hdr.py samples/hdr10_ffprobe.json
 python tools/probe_hdr.py samples/hlg_ffprobe.json
 python tools/probe_hdr.py samples/sdr_ffprobe.json
+python tools/probe_layout.py "AvatarTheWayofWater 2022 (1080p24fpsH264FullSBS3D).mkv"
 ```
 
 ## Intended Use
@@ -56,3 +62,4 @@ Use this as a blueprint for a Pico/Android VR player:
 5. Render with YUV/P010 or FFmpeg-decoded 10-bit planes.
 6. Choose the color look from the metadata and device capabilities.
 7. Apply ST2084/HLG handling and tone mapping in shader only when the runtime path does not already present HDR correctly.
+8. Choose stereo packing and projection before rendering: per-eye UVs first, then flat/curved/180/360/fisheye/cube geometry.
