@@ -1,6 +1,7 @@
 # HDR Mechanics
 
-This document describes the open HDR pipeline reconstructed from public API usage and observable symbols.
+This document describes the HDR pipeline reconstructed from the local player
+build, public API usage, and observable symbols.
 
 ## Detection Rules
 
@@ -31,7 +32,8 @@ Use open FFmpeg structures:
 - DOVI configuration side data when present
 - HDR10+ dynamic metadata when present
 
-The player-style behavior is to map this metadata into Android `MediaFormat` before configuring `MediaCodec`.
+The player behavior is to map this metadata into Android `MediaFormat` before
+configuring `MediaCodec`.
 
 ## Android MediaCodec
 
@@ -47,7 +49,8 @@ The hardware path should:
 4. Query decoder color formats and prefer `COLOR_FormatYUVP010` for 10-bit HDR.
 5. Configure `MediaCodec` with the HDR-aware format.
 
-The observed player also keeps a fallback FFmpeg path for 10/12-bit YUV conversion and texture upload when hardware output is unsuitable.
+The local build also keeps a fallback FFmpeg path for 10/12-bit YUV conversion
+and texture upload when hardware output is unsuitable.
 
 ## Rendering
 
@@ -64,6 +67,10 @@ When the runtime cannot present HDR natively, shader tone mapping is used:
 - Apply a brightness/tone-map curve.
 - Optionally use Dolby mapping LUTs for DOVI-derived per-frame metadata.
 
+The visible "good color" is mostly decided here, not at the metadata flag level. See
+`docs/color-pipeline.md` for the color-mode selection policy and shader-side look
+controls.
+
 ## OpenXR Color Space
 
 Use `XR_FB_color_space`:
@@ -77,10 +84,10 @@ This repository intentionally keeps enum selection policy separate from decoding
 
 ## Dolby Vision
 
-The observed stack has DOVI frame side-data handling and Dolby mapping textures. In this repository that is represented as an extension point:
+The local build has DOVI frame side-data handling and Dolby mapping textures. In
+this repository that is represented as an extension point:
 
 - Extract DOVI profile/configuration through FFmpeg.
 - Classify DOVI as HDR.
 - Provide per-frame metadata hooks.
 - Do not ship proprietary mapping tables or copied implementation details.
-
